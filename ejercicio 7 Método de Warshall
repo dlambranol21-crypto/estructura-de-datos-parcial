@@ -1,0 +1,78 @@
+import java.util.*;
+
+public class Ejercicio7_Warshall {
+
+    public static void main(String[] args) {
+        int[][] g = {
+            {0, 1, 0, 0, 0},
+            {0, 0, 1, 0, 0},
+            {1, 0, 0, 0, 0},
+            {0, 0, 0, 0, 1},
+            {0, 0, 0, 1, 0}
+        };
+
+        int n = g.length;
+        boolean[][] reach = new boolean[n][n];
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                reach[i][j] = g[i][j] == 1;
+            }
+            reach[i][i] = true;
+        }
+
+        for (int k = 0; k < n; k++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j]);
+                }
+            }
+        }
+
+        System.out.println("Matriz de alcanzabilidad:");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                System.out.print((reach[i][j] ? 1 : 0) + " ");
+            }
+            System.out.println();
+        }
+
+        boolean fuerte = true;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (!reach[i][j]) {
+                    fuerte = false;
+                }
+            }
+        }
+
+        if (fuerte) {
+            System.out.println("\nEl grafo es fuertemente conexo.");
+        } else {
+            System.out.println("\nEl grafo NO es fuertemente conexo.");
+            System.out.println("Componentes fuertemente conexos:");
+
+            boolean[] usado = new boolean[n];
+            int contador = 1;
+
+            for (int i = 0; i < n; i++) {
+                if (!usado[i]) {
+                    System.out.print("CFC" + contador + ": [");
+                    boolean primero = true;
+
+                    for (int j = 0; j < n; j++) {
+                        if (!usado[j] && reach[i][j] && reach[j][i]) {
+                            if (!primero) System.out.print(", ");
+                            System.out.print(j);
+                            usado[j] = true;
+                            primero = false;
+                        }
+                    }
+
+                    System.out.println("]");
+                    contador++;
+                }
+            }
+        }
+    }
+}
