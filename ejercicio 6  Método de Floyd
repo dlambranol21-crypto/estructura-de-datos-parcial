@@ -5,56 +5,108 @@ public class Ejercicio6_Floyd {
     static int INF = 999999;
 
     public static void main(String[] args) {
-        int[][] g = {
-            {0, 3, INF, 7},
-            {8, 0, 2, INF},
-            {5, INF, 0, 1},
-            {2, INF, INF, 0}
+        int[][] grafo = {
+            {0,   4,   INF, 10},
+            {INF, 0,   -6,  INF},
+            {INF, INF, 0,   2},
+            {INF, 1,   INF, 0}
         };
 
-        int n = g.length;
-        int[][] dist = new int[n][n];
+        System.out.println("Matriz original:");
+        imprimir(grafo);
 
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                dist[i][j] = g[i][j];
+        int[][] dist = copiarMatriz(grafo);
+        floyd(dist);
+
+        System.out.println("\nMatriz de distancias mínimas:");
+        imprimir(dist);
+
+        ArrayList<Integer> ciclos = detectarCiclosNegativos(dist);
+
+        if (ciclos.isEmpty()) {
+            System.out.println("\nNo existen ciclos negativos.");
+        } else {
+            System.out.println("\nSe detectaron ciclos negativos en los vértices: " + ciclos);
+
+            eliminarAristasImplicadas(grafo, ciclos);
+
+            System.out.println("\nMatriz después de eliminar aristas implicadas:");
+            imprimir(grafo);
+
+            dist = copiarMatriz(grafo);
+            floyd(dist);
+
+            System.out.println("\nNueva matriz de distancias mínimas:");
+            imprimir(dist);
+
+            if (detectarCiclosNegativos(dist).isEmpty()) {
+                System.out.println("\nAhora ya no existen ciclos negativos.");
+            } else {
+                System.out.println("\nTodavía existen ciclos negativos.");
             }
         }
+    }
+
+    static void floyd(int[][] dist) {
+        int n = dist.length;
 
         for (int k = 0; k < n; k++) {
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    if (dist[i][k] != INF && dist[k][j] != INF &&
-                        dist[i][k] + dist[k][j] < dist[i][j]) {
-                        dist[i][j] = dist[i][k] + dist[k][j];
+                    if (dist[i][k] != INF && dist[k][j] != INF) {
+                        if (dist[i][k] + dist[k][j] < dist[i][j]) {
+                            dist[i][j] = dist[i][k] + dist[k][j];
+                        }
                     }
                 }
             }
         }
+    }
 
-        System.out.println("Matriz de distancias mínimas:");
-        imprimir(dist);
+    static ArrayList<Integer> detectarCiclosNegativos(int[][] dist) {
+        ArrayList<Integer> lista = new ArrayList<>();
 
-        boolean cicloNegativo = false;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < dist.length; i++) {
             if (dist[i][i] < 0) {
-                cicloNegativo = true;
-                System.out.println("Ciclo negativo detectado en vértice: " + i);
+                lista.add(i);
             }
         }
 
-        if (!cicloNegativo) {
-            System.out.println("No existen ciclos negativos.");
-        } else {
-            System.out.println("Hay ciclos negativos. Se deberían eliminar las aristas implicadas y ejecutar de nuevo.");
+        return lista;
+    }
+
+    static void eliminarAristasImplicadas(int[][] grafo, ArrayList<Integer> ciclos) {
+        for (int v : ciclos) {
+            for (int j = 0; j < grafo.length; j++) {
+                if (grafo[v][j] < 0 && grafo[v][j] != INF) {
+                    System.out.println("Eliminando arista: " + v + " -> " + j + " peso " + grafo[v][j]);
+                    grafo[v][j] = INF;
+                }
+            }
         }
     }
 
-    static void imprimir(int[][] m) {
-        for (int[] fila : m) {
-            for (int x : fila) {
-                if (x == INF) System.out.print("INF ");
-                else System.out.print(x + " ");
+    static int[][] copiarMatriz(int[][] original) {
+        int n = original.length;
+        int[][] copia = new int[n][n];
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                copia[i][j] = original[i][j];
+            }
+        }
+
+        return copia;
+    }
+
+    static void imprimir(int[][] matriz) {
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz.length; j++) {
+                if (matriz[i][j] == INF) {
+                    System.out.print("INF ");
+                } else {
+                    System.out.print(matriz[i][j] + " ");
+                }
             }
             System.out.println();
         }
