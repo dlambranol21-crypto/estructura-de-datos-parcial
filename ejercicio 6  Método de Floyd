@@ -1,5 +1,3 @@
-import java.util.*;
-
 public class Ejercicio6_Floyd_V2 {
 
     public static void main(String[] args) {
@@ -29,8 +27,11 @@ public class Ejercicio6_Floyd_V2 {
         System.out.println("Matriz de distancias mínimas:");
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                if (dist[i][j] == INF) System.out.print("INF ");
-                else System.out.print(dist[i][j] + " ");
+                if (dist[i][j] == INF) {
+                    System.out.print("INF ");
+                } else {
+                    System.out.print(dist[i][j] + " ");
+                }
             }
             System.out.println();
         }
