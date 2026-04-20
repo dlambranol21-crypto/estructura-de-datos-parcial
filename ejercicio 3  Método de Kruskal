@@ -60,4 +60,3 @@ public class Ejercicio3_Kruskal {
         return padre[x] = find(padre, padre[x]);
     }
 }
-i
