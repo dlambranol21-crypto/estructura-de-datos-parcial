@@ -1,0 +1,210 @@
+import java.util.*;
+
+public class Ejercicio1_CostosMinimos {
+
+    static class Edge implements Comparable<Edge> {
+        int u, v, w;
+
+        Edge(int u, int v, int w) {
+            this.u = Math.min(u, v);
+            this.v = Math.max(u, v);
+            this.w = w;
+        }
+
+        @Override
+        public int compareTo(Edge other) {
+            if (this.w != other.w) return this.w - other.w;
+            if (this.u != other.u) return this.u - other.u;
+            return this.v - other.v;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Edge)) return false;
+            Edge e = (Edge) obj;
+            return u == e.u && v == e.v && w == e.w;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(u, v, w);
+        }
+
+        @Override
+        public String toString() {
+            return "(" + u + "-" + v + ", peso=" + w + ")";
+        }
+    }
+
+    static class DSU {
+        int[] parent, rank;
+
+        DSU(int n) {
+            parent = new int[n];
+            rank = new int[n];
+            for (int i = 0; i < n; i++) parent[i] = i;
+        }
+
+        int find(int x) {
+            if (parent[x] != x) parent[x] = find(parent[x]);
+            return parent[x];
+        }
+
+        boolean union(int a, int b) {
+            int ra = find(a), rb = find(b);
+            if (ra == rb) return false;
+
+            if (rank[ra] < rank[rb]) parent[ra] = rb;
+            else if (rank[ra] > rank[rb]) parent[rb] = ra;
+            else {
+                parent[rb] = ra;
+                rank[ra]++;
+            }
+            return true;
+        }
+    }
+
+    static class PrimResult {
+        List<Edge> mst = new ArrayList<>();
+        int cost = 0;
+    }
+
+    static class KruskalResult {
+        List<Edge> mst = new ArrayList<>();
+        int cost = 0;
+    }
+
+    static int[][] generarMatriz(int n, int min, int max) {
+        Random rand = new Random();
+        int[][] g = new int[n][n];
+
+        for (int i = 0; i < n; i++) {
+            g[i][i] = 0;
+            for (int j = i + 1; j < n; j++) {
+                int peso = rand.nextInt(max - min + 1) + min;
+                g[i][j] = peso;
+                g[j][i] = peso;
+            }
+        }
+        return g;
+    }
+
+    static void imprimirMatriz(int[][] g) {
+        System.out.println("Matriz de adyacencia:");
+        for (int[] fila : g) {
+            for (int val : fila) {
+                System.out.printf("%4d ", val);
+            }
+            System.out.println();
+        }
+    }
+
+    static List<Edge> obtenerAristas(int[][] g) {
+        List<Edge> aristas = new ArrayList<>();
+        for (int i = 0; i < g.length; i++) {
+            for (int j = i + 1; j < g.length; j++) {
+                aristas.add(new Edge(i, j, g[i][j]));
+            }
+        }
+        return aristas;
+    }
+
+    static PrimResult prim(int[][] g) {
+        int n = g.length;
+        boolean[] selected = new boolean[n];
+        int[] key = new int[n];
+        int[] parent = new int[n];
+        Arrays.fill(key, Integer.MAX_VALUE);
+        Arrays.fill(parent, -1);
+
+        key[0] = 0;
+        PrimResult res = new PrimResult();
+
+        for (int count = 0; count < n; count++) {
+            int u = -1, min = Integer.MAX_VALUE;
+            for (int v = 0; v < n; v++) {
+                if (!selected[v] && key[v] < min) {
+                    min = key[v];
+                    u = v;
+                }
+            }
+
+            selected[u] = true;
+
+            if (parent[u] != -1) {
+                Edge e = new Edge(parent[u], u, g[parent[u]][u]);
+                res.mst.add(e);
+                res.cost += e.w;
+            }
+
+            for (int v = 0; v < n; v++) {
+                if (!selected[v] && g[u][v] != 0 && g[u][v] < key[v]) {
+                    key[v] = g[u][v];
+                    parent[v] = u;
+                }
+            }
+        }
+        Collections.sort(res.mst);
+        return res;
+    }
+
+    static KruskalResult kruskal(int[][] g) {
+        int n = g.length;
+        List<Edge> aristas = obtenerAristas(g);
+        Collections.sort(aristas);
+
+        DSU dsu = new DSU(n);
+        KruskalResult res = new KruskalResult();
+
+        for (Edge e : aristas) {
+            if (dsu.union(e.u, e.v)) {
+                res.mst.add(e);
+                res.cost += e.w;
+                if (res.mst.size() == n - 1) break;
+            }
+        }
+        Collections.sort(res.mst);
+        return res;
+    }
+
+    static void compararMST(List<Edge> prim, List<Edge> kruskal) {
+        Set<Edge> setPrim = new HashSet<>(prim);
+        Set<Edge> setKruskal = new HashSet<>(kruskal);
+
+        if (setPrim.equals(setKruskal)) {
+            System.out.println("Prim y Kruskal generan el MISMO conjunto de aristas.");
+        } else {
+            System.out.println("Prim y Kruskal NO generan el mismo conjunto de aristas.");
+
+            Set<Edge> soloPrim = new HashSet<>(setPrim);
+            soloPrim.removeAll(setKruskal);
+
+            Set<Edge> soloKruskal = new HashSet<>(setKruskal);
+            soloKruskal.removeAll(setPrim);
+
+            System.out.println("Aristas solo en Prim: " + soloPrim);
+            System.out.println("Aristas solo en Kruskal: " + soloKruskal);
+        }
+    }
+
+    public static void main(String[] args) {
+        int n = 10;
+        int[][] grafo = generarMatriz(n, 1, 100);
+
+        imprimirMatriz(grafo);
+
+        PrimResult primRes = prim(grafo);
+        KruskalResult kruskalRes = kruskal(grafo);
+
+        System.out.println("\nMST con Prim:");
+        System.out.println("Aristas: " + primRes.mst);
+        System.out.println("Costo total: " + primRes.cost);
+
+        System.out.println("\nMST con Kruskal:");
+        System.out.println("Aristas: " + kruskalRes.mst);
+        System.out.println("Costo total: " + kruskalRes.cost);
+
+        System.out.println();
+        compararMST(primRes.mst, kruskalRes.mst);
+    }
+}
