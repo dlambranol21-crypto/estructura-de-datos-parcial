@@ -1,75 +1,117 @@
 import java.util.*;
 
-public class Ejercicio8_RecomendacionAmigos {
+public class SistemaAmigos {
 
-    static Map<String, ArrayList<String>> red = new HashMap<>();
+    private HashMap<String, ArrayList<String>> usuarios;
 
-    public static void main(String[] args) {
-        agregarAmistad("Ana", "Luis");
-        agregarAmistad("Ana", "Carlos");
-        agregarAmistad("Luis", "Marta");
-        agregarAmistad("Carlos", "Sofia");
-        agregarAmistad("Marta", "Pedro");
-
-        System.out.println("Recomendaciones para Ana: " + recomendarAmigos("Ana"));
-        System.out.println("Número mínimo de conexiones entre Ana y Pedro: " + rutaMasCorta("Ana", "Pedro"));
+    public SistemaAmigos() {
+        usuarios = new HashMap<>();
     }
 
-    static void agregarUsuario(String nombre) {
-        if (!red.containsKey(nombre)) {
-            red.put(nombre, new ArrayList<>());
+    // Agrega un usuario si no existe
+    public void agregarUsuario(String nombre) {
+        if (!usuarios.containsKey(nombre)) {
+            usuarios.put(nombre, new ArrayList<>());
         }
     }
 
-    static void agregarAmistad(String a, String b) {
-        agregarUsuario(a);
-        agregarUsuario(b);
-        red.get(a).add(b);
-        red.get(b).add(a);
+    // Agrega amistad entre dos usuarios
+    public void agregarAmistad(String u1, String u2) {
+        agregarUsuario(u1);
+        agregarUsuario(u2);
+
+        if (!usuarios.get(u1).contains(u2)) {
+            usuarios.get(u1).add(u2);
+        }
+
+        if (!usuarios.get(u2).contains(u1)) {
+            usuarios.get(u2).add(u1);
+        }
     }
 
-    static ArrayList<String> recomendarAmigos(String usuario) {
-        ArrayList<String> recomendaciones = new ArrayList<>();
-        ArrayList<String> amigos = red.get(usuario);
+    // Recomienda amigos de amigos
+    public ArrayList<String> recomendarAmigos(String usuario) {
+        ArrayList<String> resultado = new ArrayList<>();
 
-        for (String amigo : amigos) {
-            for (String amigoDeAmigo : red.get(amigo)) {
-                if (!amigoDeAmigo.equals(usuario)
-                        && !amigos.contains(amigoDeAmigo)
-                        && !recomendaciones.contains(amigoDeAmigo)) {
-                    recomendaciones.add(amigoDeAmigo);
+        if (!usuarios.containsKey(usuario)) {
+            return resultado;
+        }
+
+        ArrayList<String> amigosDirectos = usuarios.get(usuario);
+
+        for (String amigo : amigosDirectos) {
+            ArrayList<String> amigosDeEseAmigo = usuarios.get(amigo);
+
+            for (String posible : amigosDeEseAmigo) {
+                if (!posible.equals(usuario) &&
+                    !amigosDirectos.contains(posible) &&
+                    !resultado.contains(posible)) {
+                    resultado.add(posible);
                 }
             }
         }
 
-        return recomendaciones;
+        return resultado;
     }
 
-    static int rutaMasCorta(String inicio, String fin) {
-        Queue<String> cola = new LinkedList<>();
-        Map<String, Integer> distancia = new HashMap<>();
-        ArrayList<String> visitados = new ArrayList<>();
+    // Calcula la ruta más corta entre dos usuarios
+    public int rutaMasCorta(String u1, String u2) {
+        if (!usuarios.containsKey(u1) || !usuarios.containsKey(u2)) {
+            return -1;
+        }
 
-        cola.add(inicio);
-        distancia.put(inicio, 0);
-        visitados.add(inicio);
+        Queue<String> cola = new LinkedList<>();
+        HashMap<String, Integer> niveles = new HashMap<>();
+
+        cola.add(u1);
+        niveles.put(u1, 0);
 
         while (!cola.isEmpty()) {
             String actual = cola.poll();
+            int distanciaActual = niveles.get(actual);
 
-            if (actual.equals(fin)) {
-                return distancia.get(actual);
+            if (actual.equals(u2)) {
+                return distanciaActual;
             }
 
-            for (String vecino : red.get(actual)) {
-                if (!visitados.contains(vecino)) {
-                    visitados.add(vecino);
+            for (String vecino : usuarios.get(actual)) {
+                if (!niveles.containsKey(vecino)) {
                     cola.add(vecino);
-                    distancia.put(vecino, distancia.get(actual) + 1);
+                    niveles.put(vecino, distanciaActual + 1);
                 }
             }
         }
 
         return -1;
+    }
+
+    // Muestra la red social
+    public void mostrar() {
+        for (String usuario : usuarios.keySet()) {
+            System.out.println(usuario + ": " + usuarios.get(usuario));
+        }
+    }
+
+    public static void main(String[] args) {
+        SistemaAmigos red = new SistemaAmigos();
+
+        red.agregarAmistad("Juan", "Pedro");
+        red.agregarAmistad("Juan", "Laura");
+        red.agregarAmistad("Pedro", "Sofia");
+        red.agregarAmistad("Laura", "Carlos");
+        red.agregarAmistad("Carlos", "Elena");
+        red.agregarAmistad("Sofia", "Mario");
+
+        System.out.println("Lista de usuarios y amistades:");
+        red.mostrar();
+
+        System.out.println("\nRecomendaciones para Juan:");
+        System.out.println(red.recomendarAmigos("Juan"));
+
+        System.out.println("\nRuta más corta entre Juan y Elena:");
+        System.out.println(red.rutaMasCorta("Juan", "Elena"));
+
+        System.out.println("\nRuta más corta entre Juan y Mario:");
+        System.out.println(red.rutaMasCorta("Juan", "Mario"));
     }
 }
